@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from lxml import etree
 from typing import List, Dict
+from datetime import datetime, timedelta, timezone
 
 RSS_URL = "https://36kr.com/feed"
 HEADERS = {
@@ -67,6 +68,28 @@ def fetch_rss_articles() -> List[Dict]:
     return articles
 
 
+def filter_last_24h(articles: List[Dict]) -> List[Dict]:
+    """Keep only articles published in the last 24 hours."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    recent = []
+    for article in articles:
+        pub = article.get("pub_date", "")
+        if not pub:
+            continue
+        try:
+            # 36kr format: "2026-02-27 11:48:42  +0800"
+            dt = datetime.strptime(pub.strip(), "%Y-%m-%d %H:%M:%S  %z")
+        except ValueError:
+            try:
+                dt = datetime.strptime(pub.strip(), "%Y-%m-%d %H:%M:%S %z")
+            except ValueError:
+                recent.append(article)  # Can't parse date, include it to be safe
+                continue
+        if dt >= cutoff:
+            recent.append(article)
+    return recent
+
+
 def score_relevance(article: Dict) -> int:
     """Score how relevant an article is to our categories."""
     text = f"{article['title']} {article.get('description', '')} {article.get('content', '')[:500]}".lower()
@@ -90,7 +113,10 @@ def scrape_daily_articles(max_articles: int = 8) -> str:
     all_articles = fetch_rss_articles()
     print(f"Found {len(all_articles)} articles in RSS feed")
 
-    relevant = filter_relevant(all_articles, max_articles=max_articles)
+    recent = filter_last_24h(all_articles)
+    print(f"Filtered to {len(recent)} articles from last 24h")
+
+    relevant = filter_relevant(recent, max_articles=max_articles)
     print(f"Filtered to {len(relevant)} relevant articles")
 
     if not relevant:
