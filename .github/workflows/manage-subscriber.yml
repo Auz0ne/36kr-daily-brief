@@ -10,9 +10,10 @@ on:
         options:
           - add
           - remove
+          - list
       email:
-        description: 'Email address'
-        required: true
+        description: 'Email address (not needed for list)'
+        required: false
         type: string
 
 jobs:
@@ -28,9 +29,15 @@ jobs:
           python-version: '3.11'
 
       - name: ${{ inputs.action }} subscriber
-        run: python manage_subscribers.py ${{ inputs.action }} "${{ inputs.email }}"
+        run: |
+          if [ "${{ inputs.action }}" = "list" ]; then
+            python manage_subscribers.py list
+          else
+            python manage_subscribers.py ${{ inputs.action }} "${{ inputs.email }}"
+          fi
 
       - name: Commit and push
+        if: inputs.action != 'list'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
