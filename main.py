@@ -17,7 +17,7 @@ def generate_brief(articles_content: str) -> str:
     user_prompt = USER_PROMPT_TEMPLATE.format(articles_content=articles_content)
     
     response = client.messages.create(
-        model="claude-sonnet-4-5-20250514",
+        model="claude-sonnet-4-5-latest",
         max_tokens=4000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
