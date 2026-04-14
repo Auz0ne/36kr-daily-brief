@@ -2,7 +2,6 @@
 
 import requests
 from bs4 import BeautifulSoup
-from lxml import etree
 from typing import List, Dict
 from datetime import datetime, timedelta, timezone
 
@@ -40,14 +39,15 @@ def fetch_rss_articles() -> List[Dict]:
     resp.raise_for_status()
     resp.encoding = "utf-8"
 
-    root = etree.fromstring(resp.content)
+    feed = BeautifulSoup(resp.content, "xml")
     articles = []
 
-    for item in root.findall(".//item"):
-        title = item.findtext("title", "").strip()
-        link = item.findtext("link", "").strip()
-        pub_date = item.findtext("pubDate", "").strip()
-        description_html = item.findtext("description", "").strip()
+    for item in feed.find_all("item"):
+        title = item.find("title").get_text(strip=True) if item.find("title") else ""
+        link = item.find("link").get_text(strip=True) if item.find("link") else ""
+        pub_date = item.find("pubDate").get_text(strip=True) if item.find("pubDate") else ""
+        description_tag = item.find("description")
+        description_html = description_tag.get_text(strip=True) if description_tag else ""
 
         # Extract plain text from the HTML description
         if description_html:
