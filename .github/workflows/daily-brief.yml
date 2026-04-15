@@ -2,8 +2,8 @@ name: 36kr Daily Brief
 
 on:
   schedule:
-    # 6am UTC = 7am CET (Paris) — runs every day
-    - cron: '0 6 * * *'
+    # 5am UTC = 7am CEST (Paris summer) / 6am CET (Paris winter)
+    - cron: '0 5 * * *'
   workflow_dispatch: # Manual trigger for testing
 
 jobs:
